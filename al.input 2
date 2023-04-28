@@ -1,0 +1,45 @@
+units metal
+atom_style atomic
+
+lattice fcc 4.06
+# define region 1, 2, 3 and give them label: Alu, solid, liquid
+region Alu block 0.0 4.0 0.0 4.0 0.0 16.0 # fill in X,Y,Z
+region solid block 0.0 4.0 0.0 4.0 0.0 8.0 # fill in 6 values
+region liquid block 0.0 4.0 0.0 4.0 8.0 16.0 # fill in 6 values
+create_box 1 Alu
+create_atoms 1 region solid units lattice
+create_atoms 1 random 544 97 liquid 
+# X: number of atoms, Y: a random number of your choice
+
+# Use pair_style eam/fs and define parameters
+pair_style eam/fs
+pair_coeff * * al.eam Al
+
+# output thermo info every 100 steps
+thermo 100
+thermo_style custom time temp density etotal pe press vol xlat ylat zlat lx ly lz
+
+# output coordinate every 10000 steps
+dump 1 all xyz 10000 al.xyz
+dump_modify 1 element Al
+dump_modify 1 sort id
+
+min_style cg
+minimize 1.0e-10 1.0e-10 100 100
+
+timestep 0.0025
+
+# X: the temperature of you choice (read the problem prompt)
+# Y: random number of your choice
+velocity all create 855 97 dist gaussian
+fix NVE all nve/limit 0.1
+run 500
+
+unfix NVE
+# X: the temperature of you choice (read the problem prompt)
+fix NVT all temp/rescale 1 855 855 10 1
+fix NVE all nve
+run 500
+
+unfix NVT
+run 300000
